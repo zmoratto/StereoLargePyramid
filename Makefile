@@ -10,4 +10,4 @@ ross_stereo: ross_stereo.o
 	$(CXX) -o $@ $(CXXFLAGS) $(LDFLAGS) $^
 
 clean:
-	rm -f *.o *~ ross_stereo *disp*.tif
+	rm -f *.o *~ ross_stereo *disp*.tif L?.tif R?.tif
