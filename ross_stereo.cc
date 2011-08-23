@@ -5,6 +5,8 @@
 #include <vw/Stereo/rewrite/CorrelationView.h>
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
+#include "SubDivideRegions.h"
+#include "CorrelationRegion.h"
 
 using namespace vw;
 namespace stereo2 = stereo::rewrite;
@@ -63,8 +65,10 @@ int main( int argc, char** argv ) {
     kernel[2] = 6.0/16.0;
 
     int32 max_pyramid_levels = 5;
-    fs::create_symlink("LLQ2-L.tif", "L0.tif");
-    fs::create_symlink("LLQ2-R.tif", "R0.tif");
+    if ( !fs::exists("L0.tif") )
+      fs::create_symlink("LLQ2-L.tif", "L0.tif");
+    if ( !fs::exists("R0.tif") )
+      fs::create_symlink("LLQ2-R.tif", "R0.tif");
     // Building pyramids
     for ( int32 i = 0; i < max_pyramid_levels; i++ ) {
       std::string num = boost::lexical_cast<std::string>(i);
@@ -79,20 +83,51 @@ int main( int argc, char** argv ) {
 
     { // Start out the correlation
       std::string num = boost::lexical_cast<std::string>(max_pyramid_levels);
-      DiskImageView<PixelGray<float> > left("L"+num+".tif"), righ("R"+num+".tif");
       ImageViewRef<PixelMask<Vector2i> > disparity =
-        pyramid_correlate( left, righ,
-                           stereo2::preprocessing<stereo2::SUBTRACTED_MEAN>(35),
-                           search_volume / (0x01 << max_pyramid_levels),kernel_size,
-                           stereo2::CROSS_CORRELATION, cross_corr);
+        stereo2::correlate( DiskImageView<PixelGray<float> >("L"+num+".tif"),
+                            DiskImageView<PixelGray<float> >("R"+num+".tif"),
+                            stereo2::preprocessing<stereo2::SUBTRACTED_MEAN>(25),
+                            search_volume / (0x01 << max_pyramid_levels),kernel_size,
+                            stereo2::CROSS_CORRELATION, cross_corr);
 
-      block_write_image( "D0.tif", disparity, TerminalProgressCallback("", "D0.tif") );
+      block_write_image( "D"+num+".tif", disparity, TerminalProgressCallback("", "D"+num+".tif") );
     }
 
     // Do the other layers
     for ( int32 i = max_pyramid_levels - 1; i >= 0; i-- ) {
       std::string num = boost::lexical_cast<std::string>(i);
-      DiskImageView<PixelGray<float> > left("L"+num+".tif"), righ("R"+num+".tif");
+      std::string pnum = boost::lexical_cast<std::string>(i+1);
+
+      std::list<SearchParam> zones;
+      subdivide_regions( DiskImageView<PixelMask<Vector2i> >("D"+pnum+".tif"),
+                         bounding_box(DiskImageView<PixelMask<Vector2i> >("D"+pnum+".tif")),
+                         zones, kernel_size );
+
+      { // Write out the debug information for the previous disparity
+        std::ofstream f( ("ZONE"+pnum+".txt").c_str() );
+        BOOST_FOREACH( SearchParam& zone, zones ) {
+          f << zone.first << " " << zone.second << "\n";
+        }
+        f.close();
+      }
+
+      // Expand our subregions
+      BOOST_FOREACH( SearchParam& zone, zones ) {
+        zone.first *= 2;
+        zone.second *= 2;
+        zone.second.expand(1);
+      }
+
+      std::cout << "Kernel_size Out: " << kernel_size << "\n";
+
+      ImageViewRef<PixelMask<Vector2i> > disparity=
+        stereo2::correlate( DiskImageView<PixelGray<float> >("L"+num+".tif"),
+                            DiskImageView<PixelGray<float> >("R"+num+".tif"),
+                            stereo2::preprocessing<stereo2::SUBTRACTED_MEAN>(25),
+                            zones, kernel_size,
+                            stereo2::CROSS_CORRELATION, cross_corr );
+      block_write_image( "D"+num+".tif", disparity,
+                         TerminalProgressCallback("", "D"+num+".tif") );
     }
   }
 
