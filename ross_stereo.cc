@@ -119,15 +119,15 @@ int main( int argc, char** argv ) {
       }
 
       std::cout << "Kernel_size Out: " << kernel_size << "\n";
+      typedef DiskImageView<PixelGray<float> > DIVPGF;
 
-      ImageViewRef<PixelMask<Vector2i> > disparity=
-        stereo2::correlate( DiskImageView<PixelGray<float> >("L"+num+".tif"),
-                            DiskImageView<PixelGray<float> >("R"+num+".tif"),
-                            stereo2::preprocessing<stereo2::SUBTRACTED_MEAN>(25),
-                            zones, kernel_size,
-                            stereo2::CROSS_CORRELATION, cross_corr );
-      block_write_image( "D"+num+".tif", disparity,
-                         TerminalProgressCallback("", "D"+num+".tif") );
+      block_write_image( "D"+num+".tif",
+                         stereo2::correlate( DIVPGF("L"+num+".tif"),
+                                             DIVPGF("R"+num+".tif"),
+                                             stereo2::preprocessing<stereo2::SUBTRACTED_MEAN>(25),
+                                             zones, kernel_size,
+                                             stereo2::CROSS_CORRELATION, cross_corr ),
+                   TerminalProgressCallback("", "D"+num+".tif") );
     }
   }
 

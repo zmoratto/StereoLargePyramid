@@ -10,7 +10,7 @@ namespace rewrite {
 
   /// An Image View that correlates regions with different settings
   template <class Image1T, class Image2T, class PreFilterT>
-  class CorrelationByRegionView : public ImageViewBase<CorrelationView<Image1T,Image2T,PreFilterT> > {
+  class CorrelationByRegionView : public ImageViewBase<CorrelationByRegionView<Image1T,Image2T,PreFilterT> > {
 
     Image1T m_left_image;
     Image2T m_right_image;
@@ -35,7 +35,6 @@ namespace rewrite {
       m_left_image(left.impl()), m_right_image(right.impl()), 
       m_prefilter(prefilter), m_search_params(search_params), m_kernel_size(kernel_size),
       m_cost_type(cost_type), m_consistency_threshold(consistency_threshold) {
-      std::cout << "Constucted CorrelationByRegionView\n";
     }
 
     // Standard required ImageView interfaces
@@ -55,10 +54,11 @@ namespace rewrite {
       ImageView<pixel_type> result( bbox.width(), bbox.height() );
       BOOST_FOREACH( SearchParam const& param, m_search_params ) {
         if ( bbox.intersects(param.first) ) {
-          BBox2i global_bbox = param.first.crop(bbox);
+          BBox2i global_bbox = bbox;
+          global_bbox.crop( param.first );
           BBox2i local_bbox  = global_bbox - bbox.min();
           std::cout << "Rasterizing: " << global_bbox << "\n";
-          std::cout << "Kernel:      " << m_kernel_size << "\n";
+          std::cout << "BBox: " << bbox << "\n";
           crop(result,local_bbox) =
             crop(correlate(m_left_image,m_right_image,
                            m_prefilter,param.second,m_kernel_size,
