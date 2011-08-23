@@ -57,8 +57,6 @@ namespace rewrite {
           BBox2i global_bbox = bbox;
           global_bbox.crop( param.first );
           BBox2i local_bbox  = global_bbox - bbox.min();
-          std::cout << "Rasterizing: " << global_bbox << "\n";
-          std::cout << "BBox: " << bbox << "\n";
           crop(result,local_bbox) =
             crop(correlate(m_left_image,m_right_image,
                            m_prefilter,param.second,m_kernel_size,

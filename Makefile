@@ -1,7 +1,7 @@
-VWDIR = $(HOME)/projects/VisionWorkbench/build/i386_darwin_gcc4.2
+VWDIR = $(HOME)/projects/VisionWorkbench/build/i386
 
-CXXFLAGS += -arch i386 -g -O0 -fno-strict-aliasing -I/opt/local/include -I$(VWDIR)/include -fno-strict-aliasing
-LDFLAGS += -L/opt/local/lib -lboost_system-mt -lboost_thread-mt -L$(VWDIR)/lib -lvwCore -lvwImage -lvwMath -lvwFileIO -lvwStereo -L$(HOME)/packages/i386_darwin_gcc4.2/local/lib -lprofiler -lboost_filesystem-mt
+CXXFLAGS += -arch i386 -g -O3 -fno-strict-aliasing -I/opt/local/include -I$(VWDIR)/include -fno-strict-aliasing
+LDFLAGS += -L/opt/local/lib -lboost_system-mt -lboost_thread-mt -L$(VWDIR)/lib -lvwCore -lvwImage -lvwMath -lvwFileIO -lvwStereo -L$(HOME)/packages/i386_darwin_gcc4.2/local/lib -lboost_filesystem-mt
 
 %.o : %.cc
 	$(CXX) -c -o $@ $(CXXFLAGS) $^

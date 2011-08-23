@@ -32,7 +32,7 @@ int main( int argc, char** argv ) {
 
   Vector2i kernel_size(27,27);
   BBox2i search_volume(Vector2i(300,-90),Vector2i(2475,100));
-  float cross_corr = -1;
+  float cross_corr = 2;
 
   if (0) {
     DiskImageView<uint8> mask1("LLQ2-lMask.tif"), mask2("LLQ2-rMask.tif");
